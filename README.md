@@ -10,10 +10,10 @@ Microservicio básico para una tienda de mascotas.
 - Datos almacenados en memoria
 
 ## Endpoints disponibles
-- `GET /productos` - Obtiene todos los productos
-- `GET /productos/{id}` - Obtiene un producto por ID
-- `GET /productos/categoria/{categoria}` - Productos por categoría
-- `GET /productos/disponibles` - Productos con stock disponible
+- `GET /mascotas` - Obtiene todos los productos
+- `GET /mascotas/{id}` - Obtiene un producto por ID
+- `GET /mascotas/categoria/{categoria}` - Productos por categoría
+- `GET /mascotas/disponibles` - Productos con stock disponible
 
 ## Cómo ejecutar
 ```bash
