@@ -1,5 +1,9 @@
 package mascotas.mascotas.model;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Locale;
+
 public class Producto {
     private Long id;
     private String nombre;
@@ -9,6 +13,8 @@ public class Producto {
     private String descripcion;
     private String marca;
     private String tipoMascota;
+    
+    private static final NumberFormat formatoNumero = DecimalFormat.getInstance(new Locale("es", "CL"));
 
     // Constructor por defecto
     public Producto() {
@@ -54,6 +60,11 @@ public class Producto {
 
     public Double getPrecio() {
         return precio;
+    }
+    
+    // Getter para precio formateado
+    public String getPrecioFormateado() {
+        return precio != null ? formatoNumero.format(precio) : "0";
     }
 
     public void setPrecio(Double precio) {

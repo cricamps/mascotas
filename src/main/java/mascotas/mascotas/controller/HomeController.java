@@ -16,18 +16,24 @@ public class HomeController {
                 "productos", "/mascotas",
                 "producto_por_id", "/mascotas/{id}",
                 "productos_por_categoria", "/mascotas/categoria/{categoria}",
-                "productos_disponibles", "/mascotas/disponibles"
+                "productos_disponibles", "/mascotas/disponibles",
+                "ganancias_todas", "/ganancias",
+                "ganancias_diarias", "/ganancias/diarias",
+                "ganancias_mensuales", "/ganancias/mensuales", 
+                "ganancias_anuales", "/ganancias/anuales"
             )
         );
     }
 
-    // Eliminamos el conflicto de ruta /mascotas
     @GetMapping("/info")
     public Map<String, Object> info() {
         return Map.of(
             "mensaje", "Información del microservicio",
-            "descripcion", "Los productos están disponibles en /mascotas",
-            "total_productos", 8
+            "descripcion", "Microservicio para tienda de mascotas con gestión de productos y ganancias",
+            "funcionalidades", Map.of(
+                "productos", "Gestión productos en memoria",
+                "ganancias", "Cálculo de ganancias diarias, mensuales y anuales"
+            )
         );
     }
 }

@@ -1,7 +1,10 @@
 package mascotas.mascotas.service;
 
 import mascotas.mascotas.model.Producto;
+import mascotas.mascotas.model.Venta;
 import org.springframework.stereotype.Service;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -9,9 +12,11 @@ import java.util.stream.Collectors;
 public class TiendaService {
     
     private List<Producto> productos;
+    private List<Venta> ventas;
 
     public TiendaService() {
         inicializarProductos();
+        inicializarVentas();
     }
 
     private void inicializarProductos() {
@@ -36,12 +41,35 @@ public class TiendaService {
                 "Arena aglomerante sin polvo", "Gatos Best", "GATO"));
     }
 
-    // Método para obtener todos los productos
+    private void inicializarVentas() {
+        ventas = new ArrayList<>();
+        
+        // Ventas de hoy
+        LocalDateTime hoy = LocalDateTime.now();
+        ventas.add(new Venta(1L, 1L, "Alimento Premium Perro", 2, 15990.0, hoy));
+        ventas.add(new Venta(2L, 3L, "Pelota de Goma", 1, 3500.0, hoy));
+        
+        // Ventas de ayer
+        LocalDateTime ayer = hoy.minusDays(1);
+        ventas.add(new Venta(3L, 2L, "Alimento Gato Castrado", 1, 12990.0, ayer));
+        
+        // Ventas del mes pasado
+        LocalDateTime mesPasado = hoy.minusMonths(1);
+        ventas.add(new Venta(4L, 4L, "Rascador para Gatos", 1, 25990.0, mesPasado));
+        ventas.add(new Venta(5L, 5L, "Collar Antipulgas", 3, 8990.0, mesPasado));
+        ventas.add(new Venta(6L, 6L, "Champú Medicinal", 2, 6990.0, mesPasado));
+        
+        // Ventas del año pasado
+        LocalDateTime añoPasado = hoy.minusYears(1);
+        ventas.add(new Venta(7L, 7L, "Comida para Peces", 4, 4990.0, añoPasado));
+        ventas.add(new Venta(8L, 8L, "Arena Sanitaria", 2, 7990.0, añoPasado));
+    }
+
+    // Métodos para productos
     public List<Producto> obtenerTodosLosProductos() {
         return new ArrayList<>(productos);
     }
 
-    // Método para buscar producto por ID
     public Producto buscarProductoPorId(Long id) {
         return productos.stream()
                 .filter(producto -> producto.getId().equals(id))
@@ -49,17 +77,49 @@ public class TiendaService {
                 .orElse(null);
     }
 
-    // Método para buscar productos por categoría
     public List<Producto> buscarProductosPorCategoria(String categoria) {
         return productos.stream()
                 .filter(producto -> producto.getCategoria().equalsIgnoreCase(categoria))
                 .collect(Collectors.toList());
     }
 
-    // Método para obtener productos disponibles (con stock)
     public List<Producto> obtenerProductosDisponibles() {
         return productos.stream()
                 .filter(Producto::tieneStock)
                 .collect(Collectors.toList());
+    }
+
+    // Métodos para ventas y ganancias
+    public List<Venta> obtenerTodasLasVentas() {
+        return new ArrayList<>(ventas);
+    }
+
+    public Double calcularGananciasDiarias() {
+        LocalDate hoy = LocalDate.now();
+        return ventas.stream()
+                .filter(venta -> venta.getFechaVenta().toLocalDate().equals(hoy))
+                .mapToDouble(Venta::getTotal)
+                .sum();
+    }
+
+    public Double calcularGananciasMensuales() {
+        LocalDate inicioMes = LocalDate.now().withDayOfMonth(1);
+        LocalDate finMes = inicioMes.plusMonths(1).minusDays(1);
+        
+        return ventas.stream()
+                .filter(venta -> {
+                    LocalDate fechaVenta = venta.getFechaVenta().toLocalDate();
+                    return !fechaVenta.isBefore(inicioMes) && !fechaVenta.isAfter(finMes);
+                })
+                .mapToDouble(Venta::getTotal)
+                .sum();
+    }
+
+    public Double calcularGananciasAnuales() {
+        int añoActual = LocalDate.now().getYear();
+        return ventas.stream()
+                .filter(venta -> venta.getFechaVenta().getYear() == añoActual)
+                .mapToDouble(Venta::getTotal)
+                .sum();
     }
 }
