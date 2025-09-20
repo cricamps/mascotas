@@ -1,38 +1,70 @@
 package mascotas.mascotas.model;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 
+@Entity
+@Table(name = "VENTAS")
 public class Venta {
-    private Long id;
-    private Long productId;
-    private String nombreProducto;
-    private Integer cantidad;
-    private Double precioUnitario;
-    private Double total;
-    private LocalDateTime fechaVenta;
     
-    private static final NumberFormat formatoNumero = DecimalFormat.getInstance(new Locale("es", "CL"));
-    private static final DateTimeFormatter formatoFecha = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "venta_seq")
+    @SequenceGenerator(name = "venta_seq", sequenceName = "VENTA_SEQ", allocationSize = 1)
+    private Long id;
+    
+    @NotNull(message = "El ID del producto es obligatorio")
+    @Column(name = "PRODUCTO_ID", nullable = false)
+    private Long productoId;
+    
+    @NotBlank(message = "El nombre del producto es obligatorio")
+    @Size(max = 100, message = "El nombre del producto no puede tener más de 100 caracteres")
+    @Column(name = "NOMBRE_PRODUCTO", nullable = false, length = 100)
+    private String nombreProducto;
+    
+    @NotNull(message = "La cantidad es obligatoria")
+    @Min(value = 1, message = "La cantidad debe ser mayor que 0")
+    @Column(name = "CANTIDAD", nullable = false)
+    private Integer cantidad;
+    
+    @NotNull(message = "El precio unitario es obligatorio")
+    @DecimalMin(value = "0.0", inclusive = false, message = "El precio debe ser mayor que 0")
+    @Column(name = "PRECIO_UNITARIO", nullable = false, precision = 10, scale = 2)
+    private BigDecimal precioUnitario;
+    
+    @NotNull(message = "El total es obligatorio")
+    @DecimalMin(value = "0.0", inclusive = false, message = "El total debe ser mayor que 0")
+    @Column(name = "TOTAL", nullable = false, precision = 10, scale = 2)
+    private BigDecimal total;
+    
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
+    @Column(name = "FECHA_VENTA", nullable = false, updatable = false)
+    private LocalDateTime fechaVenta;
 
     // Constructor por defecto
     public Venta() {
-        this.fechaVenta = LocalDateTime.now();
     }
 
     // Constructor completo
-    public Venta(Long id, Long productId, String nombreProducto, Integer cantidad, 
-                Double precioUnitario, LocalDateTime fechaVenta) {
-        this.id = id;
-        this.productId = productId;
+    public Venta(Long productoId, String nombreProducto, Integer cantidad, BigDecimal precioUnitario) {
+        this.productoId = productoId;
         this.nombreProducto = nombreProducto;
         this.cantidad = cantidad;
         this.precioUnitario = precioUnitario;
-        this.fechaVenta = fechaVenta;
-        this.total = cantidad * precioUnitario;
+        this.total = precioUnitario.multiply(BigDecimal.valueOf(cantidad));
+        this.fechaVenta = LocalDateTime.now();
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (fechaVenta == null) {
+            fechaVenta = LocalDateTime.now();
+        }
+        if (total == null && precioUnitario != null && cantidad != null) {
+            total = precioUnitario.multiply(BigDecimal.valueOf(cantidad));
+        }
     }
 
     // Getters y Setters
@@ -44,12 +76,12 @@ public class Venta {
         this.id = id;
     }
 
-    public Long getProductId() {
-        return productId;
+    public Long getProductoId() {
+        return productoId;
     }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
+    public void setProductoId(Long productoId) {
+        this.productoId = productoId;
     }
 
     public String getNombreProducto() {
@@ -66,52 +98,37 @@ public class Venta {
 
     public void setCantidad(Integer cantidad) {
         this.cantidad = cantidad;
-        recalcularTotal();
+        // Recalcular total si hay precio unitario
+        if (this.precioUnitario != null) {
+            this.total = this.precioUnitario.multiply(BigDecimal.valueOf(cantidad));
+        }
     }
 
-    public Double getPrecioUnitario() {
+    public BigDecimal getPrecioUnitario() {
         return precioUnitario;
     }
-    
-    // Getter para precio unitario formateado
-    public String getPrecioUnitarioFormateado() {
-        return precioUnitario != null ? formatoNumero.format(precioUnitario) : "0";
-    }
 
-    public void setPrecioUnitario(Double precioUnitario) {
+    public void setPrecioUnitario(BigDecimal precioUnitario) {
         this.precioUnitario = precioUnitario;
-        recalcularTotal();
+        // Recalcular total si hay cantidad
+        if (this.cantidad != null) {
+            this.total = precioUnitario.multiply(BigDecimal.valueOf(this.cantidad));
+        }
     }
 
-    public Double getTotal() {
+    public BigDecimal getTotal() {
         return total;
     }
-    
-    // Getter para total formateado
-    public String getTotalFormateado() {
-        return total != null ? formatoNumero.format(total) : "0";
-    }
 
-    public void setTotal(Double total) {
+    public void setTotal(BigDecimal total) {
         this.total = total;
     }
 
     public LocalDateTime getFechaVenta() {
         return fechaVenta;
     }
-    
-    // Getter para fecha formateada
-    public String getFechaVentaFormateada() {
-        return fechaVenta != null ? fechaVenta.format(formatoFecha) : "";
-    }
 
     public void setFechaVenta(LocalDateTime fechaVenta) {
         this.fechaVenta = fechaVenta;
-    }
-
-    private void recalcularTotal() {
-        if (cantidad != null && precioUnitario != null) {
-            this.total = cantidad * precioUnitario;
-        }
     }
 }

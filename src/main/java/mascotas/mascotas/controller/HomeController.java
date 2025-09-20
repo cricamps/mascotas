@@ -10,30 +10,35 @@ public class HomeController {
     @GetMapping("/")
     public Map<String, Object> home() {
         return Map.of(
-            "mensaje", "Bienvenido al Microservicio de Mascotas",
+            "mensaje", "Microservicio de Gestión de Productos para Mascotas",
             "version", "1.0.0",
-            "endpoints", Map.of(
-                "productos", "/mascotas",
-                "producto_por_id", "/mascotas/{id}",
-                "productos_por_categoria", "/mascotas/categoria/{categoria}",
-                "productos_disponibles", "/mascotas/disponibles",
-                "ganancias_todas", "/ganancias",
-                "ganancias_diarias", "/ganancias/diarias",
-                "ganancias_mensuales", "/ganancias/mensuales", 
-                "ganancias_anuales", "/ganancias/anuales"
+            "descripcion", "API RESTful para gestión completa de productos",
+            "base_datos", "Oracle Cloud Database",
+            "puerto", "8081",
+            "endpoints_principales", Map.of(
+                "productos", "/productos",
+                "producto_por_id", "/productos/{id}",
+                "productos_activos", "/productos/activos",
+                "por_categoria", "/productos/categoria/{categoria}",
+                "por_tipo_mascota", "/productos/tipo/{tipoMascota}",
+                "productos_disponibles", "/productos/disponibles"
+            ),
+            "operaciones_crud", Map.of(
+                "crear", "POST /productos",
+                "leer", "GET /productos",
+                "actualizar", "PUT /productos/{id}",
+                "eliminar", "DELETE /productos/{id}"
             )
         );
     }
 
-    @GetMapping("/info")
-    public Map<String, Object> info() {
+    @GetMapping("/health")
+    public Map<String, Object> health() {
         return Map.of(
-            "mensaje", "Información del microservicio",
-            "descripcion", "Microservicio para tienda de mascotas con gestión de productos y ganancias",
-            "funcionalidades", Map.of(
-                "productos", "Gestión productos en memoria",
-                "ganancias", "Cálculo de ganancias diarias, mensuales y anuales"
-            )
+            "status", "UP",
+            "microservicio", "mascotas-productos",
+            "base_datos", "Oracle Cloud conectado",
+            "puerto", "8081"
         );
     }
 }

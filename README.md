@@ -1,23 +1,38 @@
-# Proyecto Mascotas - Microservicio
+# Microservicio de Tienda de Mascotas
 
-## Descripción
-Microservicio básico para una tienda de mascotas.
 
-## Características
-- Framework: Spring Boot 3.5.5
-- Java: 17
-- API REST para gestión de productos
-- Datos almacenados en memoria
+### 🛍️ Gestión de Productos
+- `GET /productos` - Obtener todos los productos
+- `GET /productos/{id}` - Obtener producto por ID
+- `GET /productos/activos` - Obtener productos activos
+- `GET /productos/categoria/{categoria}` - Filtrar por categoría
+- `GET /productos/tipo/{tipoMascota}` - Filtrar por tipo de mascota
+- `GET /productos/marca/{marca}` - Filtrar por marca
+- `GET /productos/disponibles` - Productos con stock
+- `GET /productos/precio?min={min}&max={max}` - Filtrar por rango de precio
+- `GET /productos/buscar/{texto}` - Buscar por nombre
+- `POST /productos` - Crear nuevo producto
+- `PUT /productos/{id}` - Actualizar producto
+- `DELETE /productos/{id}` - Desactivar producto (eliminación lógica)
+- `PUT /productos/{id}/activar` - Reactivar producto
 
-## Endpoints disponibles
-- `GET /mascotas` - Obtiene todos los productos
-- `GET /mascotas/{id}` - Obtiene un producto por ID
-- `GET /mascotas/categoria/{categoria}` - Productos por categoría
-- `GET /mascotas/disponibles` - Productos con stock disponible
+### 🧾 Gestión de Ventas
+- `GET /ventas` - Obtener todas las ventas
+- `GET /ventas/{id}` - Obtener venta por ID
+- `GET /ventas/producto/{productoId}` - Ventas por producto
+- `GET /ventas/hoy` - Ventas del día actual
+- `POST /ventas` - Registrar nueva venta (actualiza stock automáticamente)
+- `GET /ventas/mas-vendidos` - Productos más vendidos
 
-## Cómo ejecutar
-```bash
-./mvnw spring-boot:run
-```
+### 💰 Reportes de Ganancias
+- `GET /ganancias` - Resumen completo de ganancias
+- `GET /ganancias/diarias` - Ganancias del día actual
+- `GET /ganancias/mensuales` - Ganancias del mes actual
+- `GET /ganancias/anuales` - Ganancias del año actual
 
-El servidor se iniciará en http://localhost:8080
+
+### Puerto
+La aplicación se ejecuta en el puerto `8081`
+
+La aplicación estará disponible en: `http://localhost:8081`
+
