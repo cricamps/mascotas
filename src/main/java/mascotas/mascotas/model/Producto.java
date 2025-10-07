@@ -3,15 +3,14 @@ package mascotas.mascotas.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.hateoas.RepresentationModel;
+
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.time.LocalDateTime;
-import java.util.Locale;
 
 @Entity
 @Table(name = "PRODUCTOS")
-public class Producto {
+public class Producto extends RepresentationModel<Producto> {
     
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "producto_seq")
@@ -19,12 +18,12 @@ public class Producto {
     private Long id;
     
     @NotBlank(message = "El nombre es obligatorio")
-    @Size(max = 100, message = "El nombre no puede tener más de 100 caracteres")
+    @Size(max = 100, message = "El nombre no puede tener mas de 100 caracteres")
     @Column(name = "NOMBRE", nullable = false, length = 100)
     private String nombre;
     
-    @NotBlank(message = "La categoría es obligatoria")
-    @Size(max = 50, message = "La categoría no puede tener más de 50 caracteres")
+    @NotBlank(message = "La categoria es obligatoria")
+    @Size(max = 50, message = "La categoria no puede tener mas de 50 caracteres")
     @Column(name = "CATEGORIA", nullable = false, length = 50)
     private String categoria;
     
@@ -38,16 +37,16 @@ public class Producto {
     @Column(name = "STOCK", nullable = false)
     private Integer stock;
     
-    @Size(max = 500, message = "La descripción no puede tener más de 500 caracteres")
+    @Size(max = 500, message = "La descripcion no puede tener mas de 500 caracteres")
     @Column(name = "DESCRIPCION", length = 500)
     private String descripcion;
     
-    @Size(max = 50, message = "La marca no puede tener más de 50 caracteres")
+    @Size(max = 50, message = "La marca no puede tener mas de 50 caracteres")
     @Column(name = "MARCA", length = 50)
     private String marca;
     
     @NotBlank(message = "El tipo de mascota es obligatorio")
-    @Size(max = 30, message = "El tipo de mascota no puede tener más de 30 caracteres")
+    @Size(max = 30, message = "El tipo de mascota no puede tener mas de 30 caracteres")
     @Column(name = "TIPO_MASCOTA", nullable = false, length = 30)
     private String tipoMascota;
     
@@ -61,8 +60,6 @@ public class Producto {
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
     @Column(name = "FECHA_ACTUALIZACION")
     private LocalDateTime fechaActualizacion;
-    
-    private static final NumberFormat formatoNumero = DecimalFormat.getInstance(new Locale("es", "CL"));
 
     // Constructor por defecto
     public Producto() {
@@ -122,11 +119,6 @@ public class Producto {
 
     public BigDecimal getPrecio() {
         return precio;
-    }
-    
-    // Getter para precio formateado
-    public String getPrecioFormateado() {
-        return precio != null ? formatoNumero.format(precio) : "0";
     }
 
     public void setPrecio(BigDecimal precio) {
@@ -189,7 +181,7 @@ public class Producto {
         this.fechaActualizacion = fechaActualizacion;
     }
 
-    // Métodos de utilidad
+    // Metodos de utilidad
     public boolean tieneStock() {
         return stock != null && stock > 0;
     }

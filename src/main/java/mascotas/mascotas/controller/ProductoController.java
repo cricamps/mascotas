@@ -2,17 +2,19 @@ package mascotas.mascotas.controller;
 
 import mascotas.mascotas.model.Producto;
 import mascotas.mascotas.service.ProductoService;
+import mascotas.mascotas.exception.ProductoNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
 @RequestMapping("/productos")
@@ -21,206 +23,134 @@ public class ProductoController {
     @Autowired
     private ProductoService productoService;
 
-    // GET /productos - Obtener todos los productos
     @GetMapping
-    public ResponseEntity<Map<String, Object>> obtenerTodosLosProductos() {
+    public ResponseEntity<CollectionModel<Producto>> obtenerTodosLosProductos() {
         List<Producto> productos = productoService.obtenerTodosLosProductos();
         
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Lista de productos obtenida exitosamente");
-        respuesta.put("total", productos.size());
-        respuesta.put("datos", productos);
+        for (Producto producto : productos) {
+            agregarEnlacesProducto(producto);
+        }
         
-        return ResponseEntity.ok(respuesta);
+        Link selfLink = linkTo(methodOn(ProductoController.class).obtenerTodosLosProductos()).withSelfRel();
+        CollectionModel<Producto> collectionModel = CollectionModel.of(productos, selfLink);
+        
+        return ResponseEntity.ok(collectionModel);
     }
 
-    // GET /productos/{id} - Obtener producto por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> obtenerProductoPorId(@PathVariable Long id) {
+    public ResponseEntity<Producto> obtenerProductoPorId(@PathVariable Long id) {
         Optional<Producto> producto = productoService.buscarProductoPorId(id);
         
-        Map<String, Object> respuesta = new HashMap<>();
         if (producto.isPresent()) {
-            respuesta.put("mensaje", "Producto encontrado");
-            respuesta.put("datos", producto.get());
-            return ResponseEntity.ok(respuesta);
+            Producto productoEncontrado = producto.get();
+            agregarEnlacesProducto(productoEncontrado);
+            return ResponseEntity.ok(productoEncontrado);
         } else {
-            respuesta.put("mensaje", "Producto no encontrado");
-            respuesta.put("id", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
+            throw new ProductoNotFoundException(id);
         }
     }
 
-    // GET /productos/activos - Obtener productos activos
     @GetMapping("/activos")
-    public ResponseEntity<Map<String, Object>> obtenerProductosActivos() {
+    public ResponseEntity<CollectionModel<Producto>> obtenerProductosActivos() {
         List<Producto> productosActivos = productoService.obtenerProductosActivos();
         
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Lista de productos activos");
-        respuesta.put("total", productosActivos.size());
-        respuesta.put("datos", productosActivos);
+        for (Producto producto : productosActivos) {
+            agregarEnlacesProducto(producto);
+        }
         
-        return ResponseEntity.ok(respuesta);
+        Link selfLink = linkTo(methodOn(ProductoController.class).obtenerProductosActivos()).withSelfRel();
+        Link allLink = linkTo(methodOn(ProductoController.class).obtenerTodosLosProductos()).withRel("todos-productos");
+        
+        CollectionModel<Producto> collectionModel = CollectionModel.of(productosActivos, selfLink, allLink);
+        
+        return ResponseEntity.ok(collectionModel);
     }
 
-    // GET /productos/categoria/{categoria} - Obtener productos por categoría
     @GetMapping("/categoria/{categoria}")
-    public ResponseEntity<Map<String, Object>> obtenerProductosPorCategoria(@PathVariable String categoria) {
+    public ResponseEntity<CollectionModel<Producto>> obtenerProductosPorCategoria(@PathVariable String categoria) {
         List<Producto> productos = productoService.obtenerProductosPorCategoria(categoria);
         
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Productos de categoría: " + categoria);
-        respuesta.put("total", productos.size());
-        respuesta.put("datos", productos);
+        for (Producto producto : productos) {
+            agregarEnlacesProducto(producto);
+        }
         
-        return ResponseEntity.ok(respuesta);
+        Link selfLink = linkTo(methodOn(ProductoController.class).obtenerProductosPorCategoria(categoria)).withSelfRel();
+        CollectionModel<Producto> collectionModel = CollectionModel.of(productos, selfLink);
+        
+        return ResponseEntity.ok(collectionModel);
     }
 
-    // GET /productos/tipo/{tipoMascota} - Obtener productos por tipo de mascota
     @GetMapping("/tipo/{tipoMascota}")
-    public ResponseEntity<Map<String, Object>> obtenerProductosPorTipoMascota(@PathVariable String tipoMascota) {
+    public ResponseEntity<CollectionModel<Producto>> obtenerProductosPorTipoMascota(@PathVariable String tipoMascota) {
         List<Producto> productos = productoService.obtenerProductosPorTipoMascota(tipoMascota);
         
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Productos para: " + tipoMascota);
-        respuesta.put("total", productos.size());
-        respuesta.put("datos", productos);
+        for (Producto producto : productos) {
+            agregarEnlacesProducto(producto);
+        }
         
-        return ResponseEntity.ok(respuesta);
+        Link selfLink = linkTo(methodOn(ProductoController.class).obtenerProductosPorTipoMascota(tipoMascota)).withSelfRel();
+        CollectionModel<Producto> collectionModel = CollectionModel.of(productos, selfLink);
+        
+        return ResponseEntity.ok(collectionModel);
     }
 
-    // GET /productos/marca/{marca} - Obtener productos por marca
-    @GetMapping("/marca/{marca}")
-    public ResponseEntity<Map<String, Object>> obtenerProductosPorMarca(@PathVariable String marca) {
-        List<Producto> productos = productoService.obtenerProductosPorMarca(marca);
-        
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Productos de marca: " + marca);
-        respuesta.put("total", productos.size());
-        respuesta.put("datos", productos);
-        
-        return ResponseEntity.ok(respuesta);
-    }
-
-    // GET /productos/disponibles - Obtener productos con stock
     @GetMapping("/disponibles")
-    public ResponseEntity<Map<String, Object>> obtenerProductosConStock() {
+    public ResponseEntity<CollectionModel<Producto>> obtenerProductosConStock() {
         List<Producto> productosDisponibles = productoService.obtenerProductosConStock();
         
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Productos disponibles en stock");
-        respuesta.put("total", productosDisponibles.size());
-        respuesta.put("datos", productosDisponibles);
+        for (Producto producto : productosDisponibles) {
+            agregarEnlacesProducto(producto);
+        }
         
-        return ResponseEntity.ok(respuesta);
+        Link selfLink = linkTo(methodOn(ProductoController.class).obtenerProductosConStock()).withSelfRel();
+        CollectionModel<Producto> collectionModel = CollectionModel.of(productosDisponibles, selfLink);
+        
+        return ResponseEntity.ok(collectionModel);
     }
 
-    // GET /productos/precio - Obtener productos por rango de precio
-    @GetMapping("/precio")
-    public ResponseEntity<Map<String, Object>> obtenerProductosPorRangoPrecios(
-            @RequestParam BigDecimal min, 
-            @RequestParam BigDecimal max) {
-        List<Producto> productos = productoService.obtenerProductosPorRangoPrecios(min, max);
-        
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Productos entre $" + min + " y $" + max);
-        respuesta.put("total", productos.size());
-        respuesta.put("datos", productos);
-        
-        return ResponseEntity.ok(respuesta);
-    }
-
-    // GET /productos/buscar/{texto} - Buscar productos por nombre
-    @GetMapping("/buscar/{texto}")
-    public ResponseEntity<Map<String, Object>> buscarProductosPorNombre(@PathVariable String texto) {
-        List<Producto> productos = productoService.buscarProductosPorNombre(texto);
-        
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Productos que contienen: " + texto);
-        respuesta.put("total", productos.size());
-        respuesta.put("datos", productos);
-        
-        return ResponseEntity.ok(respuesta);
-    }
-
-    // POST /productos - Crear nuevo producto
     @PostMapping
-    public ResponseEntity<Map<String, Object>> crearProducto(@Valid @RequestBody Producto producto) {
+    public ResponseEntity<Producto> crearProducto(@Valid @RequestBody Producto producto) {
         Producto nuevoProducto = productoService.crearProducto(producto);
+        agregarEnlacesProducto(nuevoProducto);
         
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Producto creado exitosamente");
-        respuesta.put("datos", nuevoProducto);
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoProducto);
     }
 
-    // PUT /productos/{id} - Actualizar producto
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> actualizarProducto(@PathVariable Long id, @Valid @RequestBody Producto producto) {
-        try {
-            Producto productoActualizado = productoService.actualizarProducto(id, producto);
-            
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Producto actualizado exitosamente");
-            respuesta.put("datos", productoActualizado);
-            
-            return ResponseEntity.ok(respuesta);
-        } catch (RuntimeException e) {
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Error al actualizar producto");
-            respuesta.put("error", e.getMessage());
-            
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
-        }
+    public ResponseEntity<Producto> actualizarProducto(@PathVariable Long id, @Valid @RequestBody Producto producto) {
+        Producto productoActualizado = productoService.actualizarProducto(id, producto);
+        agregarEnlacesProducto(productoActualizado);
+        
+        return ResponseEntity.ok(productoActualizado);
     }
 
-    // DELETE /productos/{id} - Eliminar producto (inteligente: físico si no tiene historial, lógico si tiene historial)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> eliminarProducto(@PathVariable Long id) {
-        try {
-            String tipoEliminacion = productoService.eliminarProducto(id);
-            
-            Map<String, Object> respuesta = new HashMap<>();
-            if ("FISICA".equals(tipoEliminacion)) {
-                respuesta.put("mensaje", "Producto eliminado físicamente - Sin historial de ventas");
-                respuesta.put("tipo", "FISICA");
-                respuesta.put("razon", "Producto sin ventas asociadas");
-            } else {
-                respuesta.put("mensaje", "Eliminación lógica aplicada - Producto tiene historial");
-                respuesta.put("tipo", "LOGICA");
-                respuesta.put("razon", "Producto con ventas asociadas - Se preserva historial");
-            }
-            respuesta.put("id", id);
-            
-            return ResponseEntity.ok(respuesta);
-        } catch (RuntimeException e) {
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Error al eliminar producto");
-            respuesta.put("error", e.getMessage());
-            
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
+    public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
+        productoService.eliminarProducto(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    private void agregarEnlacesProducto(Producto producto) {
+        Link selfLink = linkTo(methodOn(ProductoController.class).obtenerProductoPorId(producto.getId())).withSelfRel();
+        producto.add(selfLink);
+        
+        Link allProductosLink = linkTo(methodOn(ProductoController.class).obtenerTodosLosProductos()).withRel("todos-productos");
+        producto.add(allProductosLink);
+        
+        Link updateLink = linkTo(methodOn(ProductoController.class).actualizarProducto(producto.getId(), producto)).withRel("actualizar");
+        producto.add(updateLink);
+        
+        Link deleteLink = linkTo(methodOn(ProductoController.class).eliminarProducto(producto.getId())).withRel("eliminar");
+        producto.add(deleteLink);
+        
+        if (producto.getCategoria() != null) {
+            Link categoriaLink = linkTo(methodOn(ProductoController.class).obtenerProductosPorCategoria(producto.getCategoria())).withRel("misma-categoria");
+            producto.add(categoriaLink);
         }
     }
 
-    // PUT /productos/{id}/activar - Activar producto
-    @PutMapping("/{id}/activar")
-    public ResponseEntity<Map<String, Object>> activarProducto(@PathVariable Long id) {
-        try {
-            Producto producto = productoService.activarProducto(id);
-            
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Producto activado exitosamente");
-            respuesta.put("datos", producto);
-            
-            return ResponseEntity.ok(respuesta);
-        } catch (RuntimeException e) {
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Error al activar producto");
-            respuesta.put("error", e.getMessage());
-            
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
-        }
+    @ExceptionHandler(ProductoNotFoundException.class)
+    public ResponseEntity<String> handleProductoNotFound(ProductoNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 }

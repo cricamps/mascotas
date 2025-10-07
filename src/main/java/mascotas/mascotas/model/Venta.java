@@ -3,12 +3,14 @@ package mascotas.mascotas.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.hateoas.RepresentationModel;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "VENTAS")
-public class Venta {
+public class Venta extends RepresentationModel<Venta> {
     
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "venta_seq")
@@ -20,7 +22,7 @@ public class Venta {
     private Long productoId;
     
     @NotBlank(message = "El nombre del producto es obligatorio")
-    @Size(max = 100, message = "El nombre del producto no puede tener más de 100 caracteres")
+    @Size(max = 100, message = "El nombre del producto no puede tener mas de 100 caracteres")
     @Column(name = "NOMBRE_PRODUCTO", nullable = false, length = 100)
     private String nombreProducto;
     
@@ -98,7 +100,6 @@ public class Venta {
 
     public void setCantidad(Integer cantidad) {
         this.cantidad = cantidad;
-        // Recalcular total si hay precio unitario
         if (this.precioUnitario != null) {
             this.total = this.precioUnitario.multiply(BigDecimal.valueOf(cantidad));
         }
@@ -110,7 +111,6 @@ public class Venta {
 
     public void setPrecioUnitario(BigDecimal precioUnitario) {
         this.precioUnitario = precioUnitario;
-        // Recalcular total si hay cantidad
         if (this.cantidad != null) {
             this.total = precioUnitario.multiply(BigDecimal.valueOf(this.cantidad));
         }

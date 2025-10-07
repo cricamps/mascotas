@@ -2,16 +2,19 @@ package mascotas.mascotas.controller;
 
 import mascotas.mascotas.model.Venta;
 import mascotas.mascotas.service.VentaService;
+import mascotas.mascotas.exception.VentaNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
 @RequestMapping("/ventas")
@@ -20,92 +23,84 @@ public class VentaController {
     @Autowired
     private VentaService ventaService;
 
-    // GET /ventas - Obtener todas las ventas
     @GetMapping
-    public ResponseEntity<Map<String, Object>> obtenerTodasLasVentas() {
+    public ResponseEntity<CollectionModel<Venta>> obtenerTodasLasVentas() {
         List<Venta> ventas = ventaService.obtenerTodasLasVentas();
         
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Lista de ventas obtenida exitosamente");
-        respuesta.put("total", ventas.size());
-        respuesta.put("datos", ventas);
+        for (Venta venta : ventas) {
+            agregarEnlacesVenta(venta);
+        }
         
-        return ResponseEntity.ok(respuesta);
+        Link selfLink = linkTo(methodOn(VentaController.class).obtenerTodasLasVentas()).withSelfRel();
+        CollectionModel<Venta> collectionModel = CollectionModel.of(ventas, selfLink);
+        
+        return ResponseEntity.ok(collectionModel);
     }
 
-    // GET /ventas/{id} - Obtener venta por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> obtenerVentaPorId(@PathVariable Long id) {
+    public ResponseEntity<Venta> obtenerVentaPorId(@PathVariable Long id) {
         Optional<Venta> venta = ventaService.buscarVentaPorId(id);
         
-        Map<String, Object> respuesta = new HashMap<>();
         if (venta.isPresent()) {
-            respuesta.put("mensaje", "Venta encontrada");
-            respuesta.put("datos", venta.get());
-            return ResponseEntity.ok(respuesta);
+            Venta ventaEncontrada = venta.get();
+            agregarEnlacesVenta(ventaEncontrada);
+            return ResponseEntity.ok(ventaEncontrada);
         } else {
-            respuesta.put("mensaje", "Venta no encontrada");
-            respuesta.put("id", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
+            throw new VentaNotFoundException(id);
         }
     }
 
-    // GET /ventas/producto/{productoId} - Obtener ventas por producto
     @GetMapping("/producto/{productoId}")
-    public ResponseEntity<Map<String, Object>> obtenerVentasPorProducto(@PathVariable Long productoId) {
+    public ResponseEntity<CollectionModel<Venta>> obtenerVentasPorProducto(@PathVariable Long productoId) {
         List<Venta> ventas = ventaService.obtenerVentasPorProducto(productoId);
         
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Ventas del producto ID: " + productoId);
-        respuesta.put("total", ventas.size());
-        respuesta.put("datos", ventas);
+        for (Venta venta : ventas) {
+            agregarEnlacesVenta(venta);
+        }
         
-        return ResponseEntity.ok(respuesta);
+        Link selfLink = linkTo(methodOn(VentaController.class).obtenerVentasPorProducto(productoId)).withSelfRel();
+        CollectionModel<Venta> collectionModel = CollectionModel.of(ventas, selfLink);
+        
+        return ResponseEntity.ok(collectionModel);
     }
 
-    // GET /ventas/hoy - Obtener ventas del día
     @GetMapping("/hoy")
-    public ResponseEntity<Map<String, Object>> obtenerVentasDelDia() {
+    public ResponseEntity<CollectionModel<Venta>> obtenerVentasDelDia() {
         List<Venta> ventas = ventaService.obtenerVentasDelDia();
         
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Ventas del día actual");
-        respuesta.put("total", ventas.size());
-        respuesta.put("datos", ventas);
+        for (Venta venta : ventas) {
+            agregarEnlacesVenta(venta);
+        }
         
-        return ResponseEntity.ok(respuesta);
+        Link selfLink = linkTo(methodOn(VentaController.class).obtenerVentasDelDia()).withSelfRel();
+        CollectionModel<Venta> collectionModel = CollectionModel.of(ventas, selfLink);
+        
+        return ResponseEntity.ok(collectionModel);
     }
 
-    // POST /ventas - Crear nueva venta
     @PostMapping
-    public ResponseEntity<Map<String, Object>> crearVenta(@Valid @RequestBody Venta venta) {
-        try {
-            Venta nuevaVenta = ventaService.crearVenta(venta);
-            
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Venta registrada exitosamente");
-            respuesta.put("datos", nuevaVenta);
-            
-            return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
-        } catch (RuntimeException e) {
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Error al crear venta");
-            respuesta.put("error", e.getMessage());
-            
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
+    public ResponseEntity<Venta> crearVenta(@Valid @RequestBody Venta venta) {
+        Venta nuevaVenta = ventaService.crearVenta(venta);
+        agregarEnlacesVenta(nuevaVenta);
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevaVenta);
+    }
+
+    private void agregarEnlacesVenta(Venta venta) {
+        Link selfLink = linkTo(methodOn(VentaController.class).obtenerVentaPorId(venta.getId())).withSelfRel();
+        venta.add(selfLink);
+        
+        Link allVentasLink = linkTo(methodOn(VentaController.class).obtenerTodasLasVentas()).withRel("todas-ventas");
+        venta.add(allVentasLink);
+        
+        if (venta.getProductoId() != null) {
+            Link productoLink = linkTo(ProductoController.class).slash(venta.getProductoId()).withRel("producto");
+            venta.add(productoLink);
         }
     }
 
-    // GET /ventas/mas-vendidos - Productos más vendidos
-    @GetMapping("/mas-vendidos")
-    public ResponseEntity<Map<String, Object>> obtenerProductosMasVendidos() {
-        List<Object[]> productos = ventaService.obtenerProductosMasVendidos();
-        
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Productos más vendidos");
-        respuesta.put("total", productos.size());
-        respuesta.put("datos", productos);
-        
-        return ResponseEntity.ok(respuesta);
+    @ExceptionHandler(VentaNotFoundException.class)
+    public ResponseEntity<String> handleVentaNotFound(VentaNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 }
